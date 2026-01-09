@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Add License - Metrology System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('admin_dashboard') }}" class="text-blue-600 hover:text-blue-800 mr-4">
+                        ← Back
+                    </a>
+                    <h1 class="text-xl font-bold text-gray-900">Add New License</h1>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow p-8">
+            <form method="POST" class="space-y-6">
+                <!-- Serial Number -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Serial Number <span class="text-red-500">*</span>
+                    </label>
+                    <input
+  type="text"
+  name="serial_number"
+  id="serial_number"
+  required
+  class="w-full px-4 py-3 border rounded-lg"
+/>
+<p id="serial-error" class="text-sm text-red-600 mt-1 hidden">
+  Serial number already exists
+</p>
+
+                </div>
+                
+                <!-- License Number -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        License Number <span class="text-red-500">*</span>
+                    </label>
+                    <input
+  type="text"
+  name="license_number"
+  id="license_number"
+  required
+  class="w-full px-4 py-3 border rounded-lg"
+/>
+<p id="license-error" class="text-sm text-red-600 mt-1 hidden">
+  License number already exists
+</p>
+
+                </div>
+                
+                <!-- Brand -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Brand
+                    </label>
+                    <input 
+                        type="text" 
+                        name="brand" 
+                        placeholder="e.g., Mettler Toledo"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <!-- Model -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Model
+                    </label>
+                    <input 
+                        type="text" 
+                        name="model" 
+                        placeholder="e.g., IND-560"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <!-- Date Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            License Date <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="date" 
+                            name="license_date" 
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Expiry Date <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="date" 
+                            name="expiry_date" 
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Notes
+                    </label>
+                    <textarea 
+                        name="notes" 
+                        rows="4"
+                        placeholder="Additional information..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="flex space-x-4">
+                    <button 
+                        type="submit"
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        ✓ Save License
+                    </button>
+                    <a href="{{ url_for('admin_dashboard') }}" 
+                       class="flex-1 text-center bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+let isDuplicate = false;
+
+async function checkDuplicate() {
+  const serial = document.getElementById('serial_number').value.trim();
+  const license = document.getElementById('license_number').value.trim();
+  const excludeId = "{{ license.id if license else '' }}";
+
+  const res = await fetch('/admin/api/check-duplicate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      serial_number: serial,
+      license_number: license,
+      exclude_id: excludeId
+    })
+  });
+
+  const data = await res.json();
+
+  // Serial
+  const serialError = document.getElementById('serial-error');
+  if (data.serial_exists) {
+    serialError.classList.remove('hidden');
+    isDuplicate = true;
+  } else {
+    serialError.classList.add('hidden');
+  }
+
+  // License
+  const licenseError = document.getElementById('license-error');
+  if (data.license_exists) {
+    licenseError.classList.remove('hidden');
+    isDuplicate = true;
+  } else {
+    licenseError.classList.add('hidden');
+  }
+}
+
+// Trigger on typing
+document.getElementById('serial_number').addEventListener('input', checkDuplicate);
+document.getElementById('license_number').addEventListener('input', checkDuplicate);
+
+// Prevent submit if duplicate
+document.querySelector('form').addEventListener('submit', function (e) {
+  if (isDuplicate) {
+    e.preventDefault();
+    alert('Duplicate serial or license number detected!');
+  }
+});
+</script>
+
+{% endblock %}

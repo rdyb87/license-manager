@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Metrology License System{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        #video-preview {
+            max-width: 100%;
+            border-radius: 0.5rem;
+        }
+        
+        .flash-message {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {% for category, message in messages %}
+                    <div class="flash-message bg-white rounded-lg shadow-lg p-4 max-w-sm border-l-4 
+                        {% if category == 'success' %}border-green-500
+                        {% elif category == 'danger' %}border-red-500
+                        {% elif category == 'warning' %}border-yellow-500
+                        {% else %}border-blue-500{% endif %}">
+                        <div class="flex items-start">
+                            <div class="flex-1">
+                                <p class="font-medium
+                                    {% if category == 'success' %}text-green-800
+                                    {% elif category == 'danger' %}text-red-800
+                                    {% elif category == 'warning' %}text-yellow-800
+                                    {% else %}text-blue-800{% endif %}">
+                                    {{ message }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    {% block content %}{% endblock %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
