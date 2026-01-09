@@ -5,12 +5,21 @@ from functools import wraps
 from datetime import datetime, timedelta
 from config import DevelopmentConfig
 from models import db, User, License
+from sqlalchemy import or_
+import os
 
-app = Flask(__name__)
+# Create Flask app
+app = Flask(__name__, instance_relative_config=True)
 app.config.from_object(DevelopmentConfig)
 
-# FORCE these for local testing
-app.config['SESSION_COOKIE_SECURE'] = False # CRITICAL for non-HTTPS
+# Ensure instance folder exists (SQLite db will be here)
+try:
+    os.makedirs(app.instance_path, exist_ok=True)
+except OSError:
+    pass
+
+# Force session settings for local testing
+app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db.init_app(app)
@@ -153,12 +162,12 @@ def admin_dashboard():
     # Search functionality (exact or contains for admin convenience)
     if search:
         query = query.filter(
-            db.or_(
-                License.serial_number.contains(search),
-                License.license_number.contains(search),
-                License.brand.contains(search)
-            )
+            or_(
+                License.serial_number.ilike(f"%{search}%"),
+                License.license_number.ilike(f"%{search}%"),
+                License.brand.ilike(f"%{search}%")
         )
+)
     
     licenses = query.order_by(License.created_at.desc()).paginate(
         page=page, per_page=20, error_out=False
@@ -345,6 +354,7 @@ def create_admin():
 
 
 if __name__ == '__main__':
+    # Ensure DB is created
     with app.app_context():
         db.create_all()
     app.run(debug=True, host='0.0.0.0', port=5000)
