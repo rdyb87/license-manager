@@ -12,7 +12,7 @@ class Config:
 
     # Database - use environment variable or local SQLite in instance folder
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'instance', 'app.db')
+        'sqlite:///' + os.path.join(basedir, 'instance', 'metrology.db')
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
