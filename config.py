@@ -12,7 +12,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Use DATABASE_URL (PostgreSQL on Render), fallback to SQLite locally
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or "sqlite:///instance/metrology.db"
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://licensesdb_bame_user:8rnuDNKp5BTmfysS3ADufwPzMk1ZcYT2@dpg-d5gr2jngi27c739iqntg-a/licensesdb_bame'
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
