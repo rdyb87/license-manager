@@ -329,6 +329,15 @@ def check_duplicate():
 # Database Initialization
 # ============================================================================
 
+@app.route('/init_db_temp')
+def init_db_temp():
+    try:
+        db.create_all()
+        return "✅ Database tables created successfully!"
+    except Exception as e:
+        return f"❌ Error creating tables: {str(e)}"
+
+
 @app.cli.command()
 def init_db():
     """Initialize the database"""
