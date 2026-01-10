@@ -38,8 +38,13 @@
                 <div id="camera-container" class="hidden relative mb-4">
                     <video id="video-preview" class="w-full bg-black rounded-lg" autoplay playsinline></video>
                     
-                    <!-- Green Pulse Scan Line -->
-                    <div id="scan-line" class="absolute top-0 left-0 w-full h-3 bg-green-500 opacity-70 animate-pulse"></div>
+                    <!-- Animated Moving Green Scan Line -->
+                    <div id="scan-line" class="absolute left-0 w-full h-4 rounded-sm shadow-xl"></div>
+
+                    <!-- Laser overlay effect -->
+                    <div id="laser-overlay" class="absolute left-0 w-full h-full pointer-events-none overflow-hidden">
+                        <div id="laser-beam" class="absolute left-0 w-full h-1 bg-green-400 opacity-50 blur-lg rounded-sm"></div>
+                    </div>
 
                     <button 
                         id="stop-camera-btn" 
@@ -103,18 +108,75 @@ const validateBtn = document.getElementById('validate-btn');
 const resultSection = document.getElementById('result-section');
 const resultContent = document.getElementById('result-content');
 const scanLine = document.getElementById('scan-line');
+const laserBeam = document.getElementById('laser-beam');
 
 let codeReader = null;
+let scanLineAnimId = null;
+let laserAnimId = null;
 
 // =======================
 // Beep Sound
 // =======================
-const beepAudio = new Audio("data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAAAA"); 
-// simple short beep, very short data URI
-
+const beepAudio = new Audio("data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAAAA");
 function playBeep() {
     beepAudio.currentTime = 0;
     beepAudio.play().catch(e=>console.warn("Beep play error:", e));
+}
+
+// =======================
+// Animate Scan Line
+// =======================
+function animateScanLine() {
+    const containerHeight = videoElement.clientHeight;
+    let direction = 1;
+    let pos = 0;
+    const speed = 2;
+
+    scanLine.style.background = "linear-gradient(to right, rgba(0,255,0,0.7), rgba(0,255,0,0.3))";
+    scanLine.style.boxShadow = "0 0 20px 10px rgba(0,255,0,0.6)";
+    scanLine.style.borderRadius = "3px";
+
+    function step() {
+        pos += direction * speed;
+        if (pos >= containerHeight - scanLine.clientHeight) direction = -1;
+        if (pos <= 0) direction = 1;
+        scanLine.style.top = pos + 'px';
+
+        // Glow pulse
+        const pulse = Math.abs(Math.sin(Date.now()/150)) * 0.8 + 0.2;
+        scanLine.style.opacity = pulse;
+
+        scanLineAnimId = requestAnimationFrame(step);
+    }
+    step();
+}
+
+// =======================
+// Animate Laser Beam
+// =======================
+function animateLaser() {
+    const containerHeight = videoElement.clientHeight;
+    let direction = 1;
+    let pos = 0;
+    const speed = 3;
+
+    function step() {
+        pos += direction * speed;
+        if (pos >= containerHeight - laserBeam.clientHeight) direction = -1;
+        if (pos <= 0) direction = 1;
+
+        laserBeam.style.top = pos + 'px';
+        laserAnimId = requestAnimationFrame(step);
+    }
+    step();
+}
+
+// Stop animations
+function stopAnimations() {
+    cancelAnimationFrame(scanLineAnimId);
+    cancelAnimationFrame(laserAnimId);
+    scanLineAnimId = null;
+    laserAnimId = null;
 }
 
 // =======================
@@ -125,6 +187,8 @@ cameraBtn.addEventListener('click', async () => {
     cameraContainer.classList.remove('hidden');
 
     if (!codeReader) codeReader = new ZXing.BrowserMultiFormatReader();
+    animateScanLine();
+    animateLaser();
 
     const constraints = {
         video: {
@@ -170,6 +234,7 @@ function stopCamera() {
         codeReader.reset();
         codeReader = null;
     }
+    stopAnimations();
     cameraContainer.classList.add('hidden');
     cameraBtn.classList.remove('hidden');
 }
@@ -201,7 +266,7 @@ async function validateSerial(serialNumber) {
     } finally {
         validateBtn.disabled = false;
         validateBtn.innerHTML = '✓ Validate Serial Number';
-        serialInput.value = ''; // ready for next scan
+        serialInput.value = '';
     }
 }
 
