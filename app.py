@@ -21,8 +21,24 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db.init_app(app)
+
 with app.app_context():
     db.create_all()
+    
+    # Auto-create admin if not exists
+    from models import User
+
+    admin_username = os.environ.get("ADMIN_USERNAME", "admin")
+    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+
+    if not User.query.filter_by(username=admin_username).first():
+        admin = User(username=admin_username)
+        admin.set_password(admin_password)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"✅ Admin user '{admin_username}' created automatically")
+    else:
+        print(f"⚠️ Admin user '{admin_username}' already exists")
 
 # ============================================================================
 # Authentication Decorator
@@ -327,37 +343,11 @@ def check_duplicate():
 # Database Initialization
 # ============================================================================
 
-@app.route('/init_db_temp')
-def init_db_temp():
-    try:
-        db.create_all()
-        return "✅ Database tables created successfully!"
-    except Exception as e:
-        return f"❌ Error creating tables: {str(e)}"
-
-
 @app.cli.command()
 def init_db():
     """Initialize the database"""
     db.create_all()
     print('Database initialized.')
-
-
-@app.route('/create_admin_temp')
-def create_admin_temp():
-    from models import User
-
-    username = 'admin'
-    password = 'admin123'  # Change this to a strong password
-
-    if User.query.filter_by(username=username).first():
-        return "⚠️ Admin already exists"
-
-    admin = User(username=username)
-    admin.set_password(password)
-    db.session.add(admin)
-    db.session.commit()
-    return f"✅ Admin '{username}' created!"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
