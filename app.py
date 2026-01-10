@@ -23,7 +23,8 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db.init_app(app)
-
+with app.app_context():
+    db.create_all()
 
 # ============================================================================
 # Authentication Decorator
