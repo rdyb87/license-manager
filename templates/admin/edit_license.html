@@ -130,13 +130,26 @@
 </div>
 <script>
 let hasDuplicate = false;
+let debounceTimer = null;
+const MIN_LENGTH = 5;
 
 async function checkDuplicate() {
-    const serial = document.getElementById('serial_number').value.trim();
-    const license = document.getElementById('license_number').value.trim();
+    const serialInput = document.getElementById('serial_number');
+    const licenseInput = document.getElementById('license_number');
+
+    const serial = serialInput.value.trim();
+    const license = licenseInput.value.trim();
     const excludeId = document.getElementById('license_id').value;
 
-    if (!serial && !license) return;
+    // 🔒 DO NOT CHECK TOO EARLY
+    if (
+        (serial && serial.length < MIN_LENGTH) ||
+        (license && license.length < MIN_LENGTH)
+    ) {
+        resetErrors();
+        hasDuplicate = false;
+        return;
+    }
 
     const res = await fetch('/admin/api/check-duplicate', {
         method: 'POST',
@@ -170,9 +183,20 @@ async function checkDuplicate() {
     }
 }
 
+function resetErrors() {
+    document.getElementById('serial-error').classList.add('hidden');
+    document.getElementById('license-error').classList.add('hidden');
+}
+
+// Debounce wrapper
+function debounceCheck() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(checkDuplicate, 400);
+}
+
 // Run on typing
-document.getElementById('serial_number').addEventListener('input', checkDuplicate);
-document.getElementById('license_number').addEventListener('input', checkDuplicate);
+document.getElementById('serial_number').addEventListener('input', debounceCheck);
+document.getElementById('license_number').addEventListener('input', debounceCheck);
 
 // Block submit
 document.querySelector('form').addEventListener('submit', function (e) {
@@ -182,5 +206,4 @@ document.querySelector('form').addEventListener('submit', function (e) {
     }
 });
 </script>
-
 {% endblock %}

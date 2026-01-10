@@ -134,55 +134,71 @@
     </div>
 </div>
 <script>
-let isDuplicate = false;
+document.addEventListener("DOMContentLoaded", () => {
+    const licenseInput = document.getElementById("license_number");
+    const serialInput = document.getElementById("serial_number");
+    const submitBtn = document.querySelector("button[type='submit']");
 
-async function checkDuplicate() {
-  const serial = document.getElementById('serial_number').value.trim();
-  const license = document.getElementById('license_number').value.trim();
-  const excludeId = "{{ license.id if license else '' }}";
+    const MIN_LENGTH = 5;
+    let debounceTimer = null;
 
-  const res = await fetch('/admin/api/check-duplicate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      serial_number: serial,
-      license_number: license,
-      exclude_id: excludeId
-    })
-  });
+    function resetState() {
+        submitBtn.disabled = false;
+        document.querySelectorAll(".dup-error").forEach(el => el.remove());
+    }
 
-  const data = await res.json();
+    function showError(input, message) {
+        resetState();
+        submitBtn.disabled = true;
 
-  // Serial
-  const serialError = document.getElementById('serial-error');
-  if (data.serial_exists) {
-    serialError.classList.remove('hidden');
-    isDuplicate = true;
-  } else {
-    serialError.classList.add('hidden');
-  }
+        const div = document.createElement("div");
+        div.className = "dup-error text-red-600 text-sm mt-1";
+        div.innerText = message;
+        input.parentNode.appendChild(div);
+    }
 
-  // License
-  const licenseError = document.getElementById('license-error');
-  if (data.license_exists) {
-    licenseError.classList.remove('hidden');
-    isDuplicate = true;
-  } else {
-    licenseError.classList.add('hidden');
-  }
-}
+    function checkDuplicate() {
+        const license = licenseInput.value.trim();
+        const serial = serialInput.value.trim();
 
-// Trigger on typing
-document.getElementById('serial_number').addEventListener('input', checkDuplicate);
-document.getElementById('license_number').addEventListener('input', checkDuplicate);
+        // ❗ Do NOT check too early
+        if (
+            (license && license.length < MIN_LENGTH) ||
+            (serial && serial.length < MIN_LENGTH)
+        ) {
+            resetState();
+            return;
+        }
 
-// Prevent submit if duplicate
-document.querySelector('form').addEventListener('submit', function (e) {
-  if (isDuplicate) {
-    e.preventDefault();
-    alert('Duplicate serial or license number detected!');
-  }
+        fetch("/admin/api/check-duplicate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                license_number: license,
+                serial_number: serial
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            resetState();
+
+            if (data.license_exists) {
+                showError(licenseInput, "License number already exists");
+            }
+
+            if (data.serial_exists) {
+                showError(serialInput, "Serial number already exists");
+            }
+        });
+    }
+
+    function debounceCheck() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(checkDuplicate, 400);
+    }
+
+    licenseInput.addEventListener("input", debounceCheck);
+    serialInput.addEventListener("input", debounceCheck);
 });
 </script>
-
 {% endblock %}
