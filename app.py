@@ -345,23 +345,21 @@ def init_db():
     print('Database initialized.')
 
 
-@app.cli.command()
-def create_admin():
-    """Create default admin user"""
-    username = input('Enter admin username: ')
-    password = input('Enter admin password: ')
-    
+@app.route('/create_admin_temp')
+def create_admin_temp():
+    from models import User
+
+    username = 'admin'
+    password = 'admin123'  # Change this to a strong password
+
     if User.query.filter_by(username=username).first():
-        print(f'User {username} already exists.')
-        return
-    
+        return "⚠️ Admin already exists"
+
     admin = User(username=username)
     admin.set_password(password)
-    
     db.session.add(admin)
     db.session.commit()
-    print(f'Admin user {username} created successfully.')
-
+    return f"✅ Admin '{username}' created!"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
