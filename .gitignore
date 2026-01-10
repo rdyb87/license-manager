@@ -1,2 +1,48 @@
-*.db
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Flask instance folder
 instance/
+*.sqlite
+*.db
+
+# Environment variables
+.env
+.env.*
+
+# VSCode / IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Python packaging
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Pytest / coverage
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.cache/
+
+# Logs
+*.log
+
+# Render specific
+render.yaml

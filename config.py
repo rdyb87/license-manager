@@ -1,24 +1,38 @@
-# config.py - Configuration
+# config.py - Configuration for Flask + SQLAlchemy + PostgreSQL (Render)
 
 import os
 from datetime import timedelta
 
-# Absolute path to project base directory
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
+    """Base configuration"""
+    # Secret key (set in Render environment variables for production)
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production-12345678'
+
+    # Database URI
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
+    if DATABASE_URL:
+        # Force SQLAlchemy to use psycopg v3 driver
+        if DATABASE_URL.startswith("postgresql://"):
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
+        else:
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        # Local fallback SQLite for dev
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'licenses.db')}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Use DATABASE_URL (PostgreSQL on Render), fallback to SQLite locally
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql+psycopg://licensesdb_bame_user:8rnuDNKp5BTmfysS3ADufwPzMk1ZcYT2@dpg-d5gr2jngi27c739iqntg-a/licensesdb_bame'
-
-
+    # Session settings
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
+
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -29,4 +43,4 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Ensure SECRET_KEY is set via environment variable
+    # Make sure SECRET_KEY is set in Render environment variables
